@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ベースキャンプ - 旅のしおり</title>
+  <style>
+    /* --- 全体設定（リセットと共通スタイル） --- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+    }
+    body {
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    /* スマホっぽい見た目にするためのコンテナ */
+    .app-container {
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      max-height: 850px;
+      background-color: #ffffff;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      overflow-y: auto;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .hidden {
+      display: none !important;
+    }
+
+    /* --- 1. ログイン画面のスタイル --- */
+    #login-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .brand-logo {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #3b82f6;
+      margin-bottom: 10px;
+    }
+    .brand-subtitle {
+      color: #6b7280;
+      margin-bottom: 40px;
+      font-size: 0.9rem;
+    }
+    .input-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .input-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: #4b5563;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 1rem;
+      background-color: #f9fafb;
+    }
+    .input-group input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background-color: #fff;
+    }
+    .btn-primary {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover {
+      background-color: #2563eb;
+    }
+
+    /* --- 2. メイン画面（しおり）のスタイル --- */
+    #main-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background-color: #3b82f6;
+      color: white;
+      padding: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .group-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .group-name {
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+    .member-count {
+      font-size: 0.85rem;
+      background: rgba(255,255,255,0.2);
+      padding: 4px 8px;
+      border-radius: 20px;
+    }
+    .main-content {
+      padding: 20px;
+      flex: 1;
+    }
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #1f2937;
+    }
+    /* タイムライン（しおり）の装飾 */
+    .timeline {
+      position: relative;
+      border-left: 2px solid #e5e7eb;
+      padding-left: 20px;
+      margin-left: 10px;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 25px;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -27px;
+      top: 4px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #3b82f6;
+      border: 2px solid white;
+    }
+    .time {
+      font-size: 0.85rem;
+      color: #3b82f6;
+      font-weight: bold;
+    }
+    .plan-card {
+      background: #f9fafb;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 5px;
+      border: 1px solid #f3f4f6;
+    }
+    .plan-title {
+      font-weight: 600;
+      color: #374151;
+    }
+    .plan-memo {
+      font-size: 0.85rem;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    .plan-budget {
+      font-size: 0.85rem;
+      color: #10b981;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+    /* 下部ナビゲーション（おまけ） */
+    .bottom-nav {
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px;
+      background: #fff;
+    }
+    .nav-item {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      cursor: pointer;
+      text-align: center;
+    }
+    .nav-item.active {
+      color: #3b82f6;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- 💡 画面1: ログイン画面 -->
+    <div id="login-screen">
+      <div class="brand-logo">TabiShiori</div>
+      <div class="brand-subtitle">みんなでつくる、旅の計画アプリ</div>
+      
+      <form id="login-form" onsubmit="handleLogin(event)">
+        <div class="input-group">
+          <label for="email">メールアドレス</label>
+          <input type="email" id="email" placeholder="example@email.com" required value="demo@example.com">
+        </div>
+        <div class="input-group">
+          <label for="password">パスワード</label>
+          <input type="password" id="password" placeholder="••••••••" required value="password123">
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%;">ログインしてみる</button>
+      </form>
+    </div>
+
+    <!-- 💡 画面2: メイン画面（初期状態は hidden で隠す） -->
+    <div id="main-screen" class="hidden">
+      <header>
+        <div class="group-info">
+          <div class="group-name">卒業旅行in京都 ⛩️</div>
+          <div class="member-count">メンバー 6人</div>
+        </div>
+      </header>
+
+      <div class="main-content">
+        <div class="section-title">1日目のタイムライン</div>
+        
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="time">10:00</div>
+            <div class="plan-card">
+              <div class="plan-title">京都駅 集合</div>
+              <div class="plan-memo">中央口改札の近くのコインロッカー前に集まる！</div>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="time">11:30</div>
+            <div class="plan-card">
+              <div class="plan-title">ランチ：手織り寿し</div>
+              <div class="plan-memo">予約済み。各自1,500円〜2,000円くらい。</div>
+              <div class="plan-budget">予算: ¥2,000 / 人</div>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="time">14:00</div>
+            <div class="plan-card">
+              <div class="plan-title">清水寺 散策</div>
+              <div class="plan-memo">御朱印帳忘れないように！</div>
+              <div class="plan-budget">予算: ¥400 (拝観料)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- フッターメニュー（モック） -->
+      <div class="bottom-nav">
+        <div class="nav-item active">しおり</div>
+        <div class="nav-item">行きたい候補</div>
+        <div class="nav-item">割り勘</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- --- 3. JavaScriptの処理 --- -->
+  <script>
+    function handleLogin(event) {
+      // フォームのデフォルトのページリロード挙動を止める
+      event.preventDefault();
+
+      // 本来はここでFirebaseの認証を呼び出す（今回はモックなのでそのままパス）
+      const loginScreen = document.getElementById('login-screen');
+      const mainScreen = document.getElementById('main-screen');
+
+      // ログイン画面を隠して、メイン画面を表示する
+      loginScreen.classList.add('hidden');
+      mainScreen.classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
