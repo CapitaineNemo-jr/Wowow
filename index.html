@@ -19,7 +19,6 @@
       align-items: center;
       min-height: 100vh;
     }
-    /* スマホっぽい見た目にするためのコンテナ */
     .app-container {
       width: 100%;
       max-width: 420px;
@@ -135,6 +134,45 @@
       margin-bottom: 15px;
       color: #1f2937;
     }
+
+    /* ✨ 追加：予定入力フォームのスタイル */
+    .form-card {
+      background: #f3f4f6;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+    }
+    .form-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .form-card input {
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      width: 100%;
+    }
+    .form-card input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+    .btn-secondary {
+      background-color: #10b981;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      font-size: 0.9rem;
+    }
+    .btn-secondary:hover {
+      background-color: #059669;
+    }
+
     /* タイムライン（しおり）の装飾 */
     .timeline {
       position: relative;
@@ -184,7 +222,7 @@
       font-weight: 600;
       margin-top: 6px;
     }
-    /* 下部ナビゲーション（おまけ） */
+    /* 下部ナビゲーション */
     .bottom-nav {
       border-top: 1px solid #e5e7eb;
       display: flex;
@@ -208,7 +246,7 @@
 
   <div class="app-container">
 
-    <!-- 💡 画面1: ログイン画面 -->
+    <!-- 画面1: ログイン画面 -->
     <div id="login-screen">
       <div class="brand-logo">TabiShiori</div>
       <div class="brand-subtitle">みんなでつくる、旅の計画アプリ</div>
@@ -226,7 +264,7 @@
       </form>
     </div>
 
-    <!-- 💡 画面2: メイン画面（初期状態は hidden で隠す） -->
+    <!-- 画面2: メイン画面 -->
     <div id="main-screen" class="hidden">
       <header>
         <div class="group-info">
@@ -236,9 +274,26 @@
       </header>
 
       <div class="main-content">
+        
+        <!-- ✨ 追加：予定入力フォーム -->
+        <div class="form-card">
+          <div class="form-row">
+            <input type="text" id="new-time" placeholder="時間 (例: 16:30)" style="flex: 1;">
+            <input type="text" id="new-title" placeholder="予定のタイトル" style="flex: 2;">
+          </div>
+          <div class="form-row">
+            <input type="text" id="new-memo" placeholder="メモや詳細（場所など）">
+          </div>
+          <div class="form-row">
+            <input type="number" id="new-budget" placeholder="予算（任意、数字のみ）">
+          </div>
+          <button type="button" class="btn-secondary" onclick="addPlan()">予定をタイムラインに追加</button>
+        </div>
+
         <div class="section-title">1日目のタイムライン</div>
         
-        <div class="timeline">
+        <!-- タイムラインの親要素。ここにJSで子要素を足していく -->
+        <div id="timeline-container" class="timeline">
           <div class="timeline-item">
             <div class="time">10:00</div>
             <div class="plan-card">
@@ -255,19 +310,10 @@
               <div class="plan-budget">予算: ¥2,000 / 人</div>
             </div>
           </div>
-
-          <div class="timeline-item">
-            <div class="time">14:00</div>
-            <div class="plan-card">
-              <div class="plan-title">清水寺 散策</div>
-              <div class="plan-memo">御朱印帳忘れないように！</div>
-              <div class="plan-budget">予算: ¥400 (拝観料)</div>
-            </div>
-          </div>
         </div>
       </div>
 
-      <!-- フッターメニュー（モック） -->
+      <!-- フッターメニュー -->
       <div class="bottom-nav">
         <div class="nav-item active">しおり</div>
         <div class="nav-item">行きたい候補</div>
@@ -277,19 +323,60 @@
 
   </div>
 
-  <!-- --- 3. JavaScriptの処理 --- -->
+  <!-- --- JavaScriptの処理 --- -->
   <script>
+    // ログイン切り替え処理
     function handleLogin(event) {
-      // フォームのデフォルトのページリロード挙動を止める
       event.preventDefault();
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('main-screen').classList.remove('hidden');
+    }
 
-      // 本来はここでFirebaseの認証を呼び出す（今回はモックなのでそのままパス）
-      const loginScreen = document.getElementById('login-screen');
-      const mainScreen = document.getElementById('main-screen');
+    // ✨ 追加：新しい予定を動的に追加する処理
+    function addPlan() {
+      // 1. 各入力欄からユーザーが打ち込んだ文字を取得する
+      const timeVal = document.getElementById('new-time').value.trim();
+      const titleVal = document.getElementById('new-title').value.trim();
+      const memoVal = document.getElementById('new-memo').value.trim();
+      const budgetVal = document.getElementById('new-budget').value.trim();
 
-      // ログイン画面を隠して、メイン画面を表示する
-      loginScreen.classList.add('hidden');
-      mainScreen.classList.remove('hidden');
+      // 2. バリデーション（時間とタイトルが空っぽだったらエラーを出す）
+      if (!timeVal || !titleVal) {
+        alert('「時間」と「予定のタイトル」は必ず入力してね！');
+        return;
+      }
+
+      // 3. タイムラインの親要素（div）を取得
+      const container = document.getElementById('timeline-container');
+
+      // 4. 追加したい予算のHTMLをあらかじめ作っておく（入力があった場合のみ）
+      let budgetHTML = '';
+      if (budgetVal) {
+        // 数字を「1,000」みたいにカンマ区切りにする
+        const formattedBudget = Number(budgetVal).toLocaleString();
+        budgetHTML = `<div class="plan-budget">予算: ¥${formattedBudget}</div>`;
+      }
+
+      // 5. 新しいタイムライン要素（HTMLの塊）を生成する
+      const newItem = document.createElement('div');
+      newItem.className = 'timeline-item';
+      newItem.innerHTML = `
+        <div class="time">${timeVal}</div>
+        <div class="plan-card">
+          <div class="plan-title">${titleVal}</div>
+          <div class="plan-memo">${memoVal}</div>
+          ${budgetHTML}
+        </div>
+      `;
+
+      // 6. 親要素の一番最後に、作った要素をガッチャンコと結合する
+      container.appendChild(newItem);
+
+      // 7. 次の入力のために、フォームの中身をきれいにリセットする
+      document.getElementById('new-time').value = '';
+      document.getElementById('new-title').value = '';
+      document.getElementById('new-memo').value = '';
+      document.getElementById('new-budget').value = '';
     }
   </script>
 </body>
