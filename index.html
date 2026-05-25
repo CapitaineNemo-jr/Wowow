@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>旅行計画アプリ プロトタイプ</title>
+    <title>旅行計画アプリ プロトタイプ v2</title>
     <style>
         :root {
             --primary-color: #4a90e2;
             --background-color: #f5f7fa;
             --card-color: #ffffff;
             --text-color: #333333;
+            --danger-color: #e74c3c;
         }
 
         body {
@@ -24,7 +25,6 @@
             min-height: 100vh;
         }
 
-        /* スマホサイズのモックアップ容器 */
         .phone-mock {
             width: 375px;
             height: 667px;
@@ -56,8 +56,7 @@
             color: #444;
         }
 
-        /* 共通の入力欄とボタン */
-        input[type="text"], input[type="password"] {
+        input[type="text"], input[type="password"], input[type="time"], input[type="number"] {
             width: 100%;
             padding: 12px;
             margin: 10px 0;
@@ -84,12 +83,8 @@
             background-color: #357abd;
         }
 
-        /* ① ログイン画面の装飾 */
-        #screen-login {
-            justify-content: center;
-        }
+        #screen-login { justify-content: center; }
 
-        /* ② グループ選択画面の装飾 */
         .group-list {
             flex: 1;
             overflow-y: auto;
@@ -103,24 +98,30 @@
             margin-bottom: 10px;
             cursor: pointer;
             font-weight: bold;
-            transition: transform 0.1s;
         }
 
-        .group-item:hover {
-            transform: scale(0.98);
-        }
-
-        .btn-plus {
-            width: 60px;
-            height: 60px;
+        /* 共通の浮遊＋ボタン (FAB) */
+        .btn-fab {
+            position: absolute;
+            right: 20px;
+            bottom: 80px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
-            font-size: 30px;
-            line-height: 50px;
-            margin: 0 auto 20px auto;
-            display: block;
+            font-size: 28px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            z-index: 5;
         }
 
-        /* モーダル（ポップアップ風） */
+        /* モーダル */
         .modal {
             display: none;
             position: absolute;
@@ -136,24 +137,23 @@
             background: white;
             padding: 20px;
             border-radius: 12px;
-            width: 80%;
+            width: 85%;
+            box-sizing: border-box;
         }
 
-        /* ③ メイン画面の装飾 */
         .main-header {
             border-bottom: 2px solid #eee;
             padding-bottom: 10px;
-            text-align: center;
+            position: relative;
         }
+        .main-header h3 { margin: 5px 0; text-align: center; }
 
+        /* リスト表示エリア */
         .main-content {
             flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 18px;
-            font-weight: bold;
-            color: #666;
+            overflow-y: auto;
+            padding-top: 10px;
+            position: relative;
         }
 
         .tab-bar {
@@ -177,6 +177,46 @@
             color: var(--primary-color);
             border-top: 3px solid var(--primary-color);
         }
+
+        /* カスタムリストアイテムと3点リーダー */
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            position: relative;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .item-data { flex: 1; font-size: 14px; word-break: break-all; }
+        .item-time { font-weight: bold; color: var(--primary-color); margin-right: 10px; }
+        
+        .menu-container { position: relative; }
+        .btn-menu {
+            background: none; color: #999; border: none; padding: 0 5px;
+            font-size: 20px; cursor: pointer; width: auto; margin: 0;
+        }
+        
+        .dropdown-menu {
+            display: none; position: absolute; right: 0; top: 25px;
+            background: white; border: 1px solid #ddd; border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 20; width: 70px;
+        }
+        .dropdown-menu.show { display: block; }
+        .dropdown-menu div {
+            padding: 8px; font-size: 12px; text-align: center; cursor: pointer;
+        }
+        .dropdown-menu div:hover { background: #f5f5f5; }
+        .dropdown-menu .menu-delete { color: var(--danger-color); }
+
+        /* お金画面の精算エリア */
+        #settlement-area {
+            background: #e8f4fd; padding: 12px; border-radius: 8px;
+            margin-bottom: 12px; font-size: 13px;
+        }
     </style>
 </head>
 <body>
@@ -196,94 +236,350 @@
             <div class="group-item" onclick="openGroup('卒業旅行')">卒業旅行（4人）</div>
             <div class="group-item" onclick="openGroup('週末キャンプ')">週末キャンプ（3人）</div>
         </div>
-        <button class="btn-plus" onclick="toggleModal(true)">+</button>
+        <button class="btn-fab" onclick="toggleGroupModal(true)">+</button>
     </div>
 
     <div id="group-modal" class="modal">
         <div class="modal-content">
             <h3>グループ作成</h3>
             <input type="text" id="new-group-name" placeholder="グループ名を入力">
-            <button onclick="copyInviteURL()">メンバーを招待 (URLコピー)</button>
             <button onclick="createGroup()" style="background-color: #2ecc71;">作成する</button>
-            <button onclick="toggleModal(false)" style="background-color: #95a5a6; margin-top: 5px;">キャンセル</button>
+            <button onclick="toggleGroupModal(false)" style="background-color: #95a5a6; margin-top: 5px;">キャンセル</button>
         </div>
     </div>
 
     <div id="screen-main" class="screen">
         <div class="main-header">
+            <span style="color: var(--primary-color); cursor:pointer; font-size:12px; position:absolute; left:0; top:8px;" onclick="navigateTo('screen-group')">← 戻る</span>
             <h3 id="current-group-title">グループ名</h3>
-            <span style="color: var(--primary-color); cursor:pointer; font-size:12px;" onclick="navigateTo('screen-group')">← 戻る</span>
         </div>
         
         <div class="main-content" id="main-content-area">
-            「しおり」の画面です
-        </div>
+            </div>
+
+        <button class="btn-fab" onclick="openItemModal()">+</button>
 
         <div class="tab-bar">
-            <div class="tab-item active" onclick="switchTab('しおり', this)">しおり</div>
-            <div class="tab-item" onclick="switchTab('行き先', this)">行き先</div>
-            <div class="tab-item" onclick="switchTab('お金', this)">お金</div>
+            <div class="tab-item active" id="tab-shiori" onclick="switchTab('しおり')">しおり</div>
+            <div class="tab-item" id="tab-yukisaki" onclick="switchTab('行き先')">行き先</div>
+            <div class="tab-item" id="tab-okane" onclick="switchTab('お金')">お金</div>
+        </div>
+    </div>
+
+    <div id="item-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="item-modal-title">項目を追加</h3>
+            <input type="hidden" id="edit-id">
+            
+            <div id="form-shiori" class="modal-form">
+                <label style="font-size:12px; color:#666;">時刻 (24時間表記)</label>
+                <input type="time" id="input-time" value="10:00">
+                <input type="text" id="input-shiori-text" placeholder="予定の内容（例: 〇〇駅集合）">
+            </div>
+
+            <div id="form-yukisaki" class="modal-form" style="display:none;">
+                <input type="text" id="input-spot-name" placeholder="行きたい場所・スポット名">
+                <input type="text" id="input-spot-url" placeholder="参考URL（任意）">
+            </div>
+
+            <div id="form-okane" class="modal-form" style="display:none;">
+                <input type="text" id="input-money-name" placeholder="支払った人の名前">
+                <input type="number" id="input-money-amount" placeholder="金額（円）">
+                <input type="text" id="input-money-text" placeholder="何に払ったか（例: レンタカー代）">
+            </div>
+
+            <button onclick="saveItem()" style="background-color: #2ecc71;">保存する</button>
+            <button onclick="closeItemModal()" style="background-color: #95a5a6; margin-top: 5px;">キャンセル</button>
         </div>
     </div>
 
 </div>
 
 <script>
-    // 画面遷移の切り替え関数
+    // --- データ管理用オブジェクト ---
+    let currentGroup = "卒業旅行";
+    let currentTab = "しおり"; 
+
+    // 初期モックデータ
+    let appData = {
+        '卒業旅行': {
+            shiori: [
+                { id: 1, time: '10:00', text: '〇〇駅集合' },
+                { id: 2, time: '11:30', text: 'ランチ（海鮮丼）' }
+            ],
+            yukisaki: [
+                { id: 1, name: '〇〇神社', url: 'https://example.com' },
+                { id: 2, name: 'サンセットビーチ', url: '' }
+            ],
+            okane: [
+                { id: 1, name: 'たろう', amount: 4000, text: 'レンタカー代' },
+                { id: 2, name: 'はなこ', amount: 1400, text: 'カフェ代' }
+            ]
+        },
+        '週末キャンプ': { shiori: [], yukisaki: [], okane: [] }
+    };
+
+    // 画面遷移
     function navigateTo(screenId) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
+        // メニューが開いたまま画面遷移したとき用のリセット
+        closeAllMenus();
     }
 
-    // モーダルの開閉
-    function toggleModal(show) {
-        const modal = document.getElementById('group-modal');
-        if (show) modal.classList.add('active');
-        else modal.classList.remove('active');
+    // グループ選択画面のモーダル
+    function toggleGroupModal(show) {
+        document.getElementById('group-modal').classList.toggle('active', show);
     }
 
-    // メンバー招待のシミュレーション
-    function copyInviteURL() {
-        alert("招待URLをクリップボードにコピーしました！\n友達に送ってシェアしましょう。");
-    }
-
-    // グループ作成処理
     function createGroup() {
         const nameInput = document.getElementById('new-group-name');
         const groupName = nameInput.value.trim();
-        
-        if (!groupName) {
-            alert("グループ名を入力してください");
-            return;
-        }
+        if (!groupName) return alert("グループ名を入力してください");
 
-        // リストに追加
+        appData[groupName] = { shiori: [], yukisaki: [], okane: [] };
+
         const container = document.getElementById('group-container');
         const newGroup = document.createElement('div');
         newGroup.className = 'group-item';
         newGroup.innerText = `${groupName}（1人）`;
         newGroup.onclick = function() { openGroup(groupName); };
-        
         container.appendChild(newGroup);
-        
-        // リセットして閉じる
+
         nameInput.value = '';
-        toggleModal(false);
+        toggleGroupModal(false);
     }
 
-    // グループをタップしてメイン画面へ移動
     function openGroup(name) {
+        currentGroup = name;
         document.getElementById('current-group-title').innerText = name;
-        switchTab('しおり', document.querySelector('.tab-item')); // 初期タブを「しおり」に
+        switchTab('しおり');
         navigateTo('screen-main');
     }
 
-    // タブの切り替え
-    function switchTab(tabName, element) {
+    // --- タブ切り替えと描画 ---
+    function switchTab(tabName) {
+        currentTab = tabName;
+        closeAllMenus();
+
+        // タブバーのハイライト切り替え
         document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-        element.classList.add('active');
+        if(tabName === 'しおり') document.getElementById('tab-shiori').classList.add('active');
+        if(tabName === '行き先') document.getElementById('tab-yukisaki').classList.add('active');
+        if(tabName === 'お金') document.getElementById('tab-okane').classList.add('active');
+
+        renderContent();
+    }
+
+    function renderContent() {
+        const container = document.getElementById('main-content-area');
+        container.innerHTML = ""; // 一旦クリア
         
-        document.getElementById('main-content-area').innerText = `「${tabName}」の画面です`;
+        const data = appData[currentGroup];
+
+        if (currentTab === 'しおり') {
+            // 時間順にソート（24時間表記文字列の比較）
+            data.shiori.sort((a, b) => a.time.localeCompare(b.time));
+            
+            data.shiori.forEach(item => {
+                container.appendChild(createListItemHTML(item.id, `
+                    <span class="item-time">${item.time}</span>
+                    <span>${item.text}</span>
+                `));
+            });
+        } 
+        else if (currentTab === '行き先') {
+            data.yukisaki.forEach(item => {
+                let urlLink = item.url ? `<br><a href="${item.url}" target="_blank" style="font-size:12px; color:var(--primary-color);">${item.url}</a>` : '';
+                container.appendChild(createListItemHTML(item.id, `
+                    <strong>${item.name}</strong>${urlLink}
+                `));
+            });
+        } 
+        else if (currentTab === 'お金') {
+            // 割り勘計算ロジック
+            let total = 0;
+            let memberMap = {}; // 各自の支払額合計
+            data.okane.forEach(e => {
+                total += e.amount;
+                memberMap[e.name] = (memberMap[e.name] || 0) + e.amount;
+            });
+            
+            const members = Object.keys(memberMap);
+            let settlementHTML = '';
+            
+            if (members.length > 0) {
+                const perPerson = Math.round(total / members.length);
+                settlementHTML = `
+                    <div id="settlement-area">
+                        <strong>合計:</strong> ${total.toLocaleString()}円 / <strong>1人あたり:</strong> ${perPerson.toLocaleString()}円<br>
+                        <table style="width:100%; margin-top:5px; font-size:12px; border-top:1px solid #ccc;">
+                `;
+                members.forEach(m => {
+                    const diff = memberMap[m] - perPerson;
+                    let diffText = diff >= 0 ? `<span style="color:#2ecc71;">+${diff.toLocaleString()}円 (貰う)</span>` : `<span style="color:#e74c3c;">${diff.toLocaleString()}円 (払う)</span>`;
+                    settlementHTML += `<tr><td>${m}</td><td style="text-align:right;">${diffText}</td></tr>`;
+                });
+                settlementHTML += `</table></div>`;
+            } else {
+                settlementHTML = `<div id="settlement-area" style="text-align:center; color:#999;">支出を入力すると割り勘を自動計算します</div>`;
+            }
+
+            // 精算エリアを先頭に追加
+            container.innerHTML = settlementHTML;
+
+            // 支出一覧の描画
+            data.okane.forEach(item => {
+                container.appendChild(createListItemHTML(item.id, `
+                    <strong>${item.name}</strong> が <strong>${item.amount.toLocaleString()}円</strong> 支払った<br>
+                    <span style="font-size:12px; color:#666;">（${item.text}）</span>
+                `));
+            });
+        }
+    }
+
+    // 共通のアイテム枠（3点リーダー付き）を作る関数
+    function createListItemHTML(id, innerContentHTML) {
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        div.innerHTML = `
+            <div class="item-data">${innerContentHTML}</div>
+            <div class="menu-container">
+                <button class="btn-menu" onclick="toggleMenu(event, ${id})">⋮</button>
+                <div class="dropdown-menu" id="menu-${id}">
+                    <div onclick="openEditItem(${id})">編集</div>
+                    <div class="menu-delete" onclick="deleteItem(${id})">削除</div>
+                </div>
+            </div>
+        `;
+        return div;
+    }
+
+    // --- 3点リーダーメニューの制御 ---
+    function toggleMenu(event, id) {
+        event.stopPropagation(); // 親要素へのクリック伝播を防ぐ
+        const targetMenu = document.getElementById(`menu-${id}`);
+        const isAlreadyOpen = targetMenu.classList.contains('show');
+        
+        closeAllMenus();
+        if (!isAlreadyOpen) targetMenu.classList.add('show');
+    }
+
+    function closeAllMenus() {
+        document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+    }
+
+    // 画面のどこかをタップしたらメニューを閉じる
+    document.addEventListener('click', closeAllMenus);
+
+    // --- 項目 追加・編集モーダルの制御 ---
+    function openItemModal() {
+        document.getElementById('edit-id').value = ''; // 新規なのでID空
+        document.getElementById('item-modal-title').innerText = `${currentTab}の追加`;
+        
+        // フォームの切り替え
+        document.getElementById('form-shiori').style.display = currentTab === 'しおり' ? 'block' : 'none';
+        document.getElementById('form-yukisaki').style.display = currentTab === '行き先' ? 'block' : 'none';
+        document.getElementById('form-okane').style.display = currentTab === 'お金' ? 'block' : 'none';
+
+        // 入力欄リセット
+        if(currentTab === 'しおり') { document.getElementById('input-shiori-text').value = ''; }
+        if(currentTab === '行き先') { document.getElementById('input-spot-name').value = ''; document.getElementById('input-spot-url').value = ''; }
+        if(currentTab === 'お金') { document.getElementById('input-money-name').value = ''; document.getElementById('input-money-amount').value = ''; document.getElementById('input-money-text').value = ''; }
+
+        document.getElementById('item-modal').classList.add('active');
+    }
+
+    function closeItemModal() {
+        document.getElementById('item-modal').classList.remove('active');
+    }
+
+    // 編集モードでモーダルを開く
+    function openEditItem(id) {
+        openItemModal();
+        document.getElementById('edit-id').value = id;
+        document.getElementById('item-modal-title').innerText = `${currentTab}の編集`;
+
+        const data = appData[currentGroup];
+
+        if (currentTab === 'しおり') {
+            const item = data.shiori.find(i => i.id === id);
+            document.getElementById('input-time').value = item.time;
+            document.getElementById('input-shiori-text').value = item.text;
+        } 
+        else if (currentTab === '行き先') {
+            const item = data.yukisaki.find(i => i.id === id);
+            document.getElementById('input-spot-name').value = item.name;
+            document.getElementById('input-spot-url').value = item.url;
+        } 
+        else if (currentTab === 'お金') {
+            const item = data.okane.find(i => i.id === id);
+            document.getElementById('input-money-name').value = item.name;
+            document.getElementById('input-money-amount').value = item.amount;
+            document.getElementById('input-money-text').value = item.text;
+        }
+    }
+
+    // 保存処理（新規・編集 共通）
+    function saveItem() {
+        const idInput = document.getElementById('edit-id').value;
+        const isEdit = idInput !== '';
+        const itemId = isEdit ? parseInt(idInput) : Date.now(); // 簡易的なユニークID生成
+        
+        const data = appData[currentGroup];
+
+        if (currentTab === 'しおり') {
+            const time = document.getElementById('input-time').value;
+            const text = document.getElementById('input-shiori-text').value.trim();
+            if(!text) return alert("内容を入力してください");
+
+            if (isEdit) {
+                const item = data.shiori.find(i => i.id === itemId);
+                item.time = time; item.text = text;
+            } else {
+                data.shiori.push({ id: itemId, time: time, text: text });
+            }
+        } 
+        else if (currentTab === '行き先') {
+            const name = document.getElementById('input-spot-name').value.trim();
+            const url = document.getElementById('input-spot-url').value.trim();
+            if(!name) return alert("スポット名を入力してください");
+
+            if (isEdit) {
+                const item = data.yukisaki.find(i => i.id === itemId);
+                item.name = name; item.url = url;
+            } else {
+                data.yukisaki.push({ id: itemId, name: name, url: url });
+            }
+        } 
+        else if (currentTab === 'お金') {
+            const name = document.getElementById('input-money-name').value.trim();
+            const amount = parseInt(document.getElementById('input-money-amount').value);
+            const text = document.getElementById('input-money-text').value.trim();
+            if(!name || isNaN(amount)) return alert("名前と金額を正しく入力してください");
+
+            if (isEdit) {
+                const item = data.okane.find(i => i.id === itemId);
+                item.name = name; item.amount = amount; item.text = text;
+            } else {
+                data.okane.push({ id: itemId, name: name, amount: amount, text: text });
+            }
+        }
+
+        closeItemModal();
+        renderContent();
+    }
+
+    // 削除処理
+    function deleteItem(id) {
+        if(!confirm("本当に削除しますか？")) return;
+        
+        const data = appData[currentGroup];
+        if (currentTab === 'しおり') data.shiori = data.shiori.filter(i => i.id !== id);
+        if (currentTab === '行き先') data.yukisaki = data.yukisaki.filter(i => i.id !== id);
+        if (currentTab === 'お金') data.okane = data.okane.filter(i => i.id !== id);
+
+        renderContent();
     }
 </script>
 
