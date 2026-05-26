@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>旅行計画アプリ プロトタイプ v2</title>
+    <title>リアルタイム旅行計画アプリ</title>
     <style>
         :root {
             --primary-color: #4a90e2;
-            --background-color: #f5f7fa;
+            --background-color: #ffffff;
             --card-color: #ffffff;
             --text-color: #333333;
             --danger-color: #e74c3c;
@@ -15,27 +15,33 @@
 
         body {
             font-family: 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--background-color);
+            background-color: #f5f7fa;
             color: var(--text-color);
             margin: 0;
             padding: 0;
             display: flex;
             justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            align-items: flex-start;
         }
 
         .phone-mock {
-            width: 375px;
-            height: 667px;
+            width: 100%;
+            max-width: 500px;
+            height: 100vh;
             background: var(--card-color);
-            border-radius: 30px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             overflow: hidden;
             position: relative;
             display: flex;
             flex-direction: column;
-            border: 8px solid #333;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        @media (min-width: 501px) {
+            .phone-mock {
+                box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            }
         }
 
         .screen {
@@ -85,6 +91,22 @@
 
         #screen-login { justify-content: center; }
 
+        .group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        .group-header h2 { margin: 0; font-size: 20px; }
+        .user-status { font-size: 11px; color: #666; margin-bottom: 5px; text-align: right; }
+        .btn-logout {
+            background: none; color: var(--danger-color); border: 1px solid var(--danger-color);
+            padding: 4px 8px; font-size: 12px; border-radius: 4px; width: auto; margin: 0;
+        }
+        .btn-logout:hover { background: #fdf2f2; }
+
         .group-list {
             flex: 1;
             overflow-y: auto;
@@ -92,15 +114,47 @@
         }
 
         .group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             background: #eef2f7;
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 10px;
-            cursor: pointer;
+            position: relative;
             font-weight: bold;
         }
 
-        /* 共通の浮遊＋ボタン (FAB) */
+        .guide-card {
+            text-align: center;
+            background: #f8f9fa;
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 30px 20px;
+            margin-top: 20px;
+            color: #64748b;
+        }
+        .guide-icon {
+            font-size: 42px;
+            margin-bottom: 12px;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .guide-title {
+            font-weight: bold;
+            font-size: 16px;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+        .guide-desc {
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 0;
+        }
+
         .btn-fab {
             position: absolute;
             right: 20px;
@@ -113,7 +167,7 @@
             color: white;
             border: none;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -121,7 +175,6 @@
             z-index: 5;
         }
 
-        /* モーダル */
         .modal {
             display: none;
             position: absolute;
@@ -139,16 +192,27 @@
             border-radius: 12px;
             width: 85%;
             box-sizing: border-box;
+            max-height: 80%;
+            overflow-y: auto;
         }
 
         .main-header {
             border-bottom: 2px solid #eee;
             padding-bottom: 10px;
             position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 40px;
         }
-        .main-header h3 { margin: 5px 0; text-align: center; }
+        
+        .title-container {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .title-container h3 { margin: 0; font-size: 18px; }
 
-        /* リスト表示エリア */
         .main-content {
             flex: 1;
             overflow-y: auto;
@@ -160,6 +224,7 @@
             display: flex;
             border-top: 1px solid #ddd;
             margin: 0 -20px -20px -20px;
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
         .tab-item {
@@ -178,7 +243,6 @@
             border-top: 3px solid var(--primary-color);
         }
 
-        /* カスタムリストアイテムと3点リーダー */
         .list-item {
             display: flex;
             justify-content: space-between;
@@ -203,7 +267,7 @@
         .dropdown-menu {
             display: none; position: absolute; right: 0; top: 25px;
             background: white; border: 1px solid #ddd; border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 20; width: 70px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 20; width: 80px;
         }
         .dropdown-menu.show { display: block; }
         .dropdown-menu div {
@@ -212,51 +276,97 @@
         .dropdown-menu div:hover { background: #f5f5f5; }
         .dropdown-menu .menu-delete { color: var(--danger-color); }
 
-        /* お金画面の精算エリア */
         #settlement-area {
             background: #e8f4fd; padding: 12px; border-radius: 8px;
             margin-bottom: 12px; font-size: 13px;
         }
+
+        .member-tag-list {
+            display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0;
+        }
+        .member-tag {
+            background: #eef2f7; padding: 4px 10px; border-radius: 20px; font-size: 13px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .member-tag .btn-del-member {
+            background: none; border: none; color: var(--danger-color); cursor: pointer; font-weight: bold; padding: 0;
+        }
+
+        .loading-overlay {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background: rgba(255,255,255,0.8); display: none;
+            justify-content: center; align-items: center; font-weight: bold; z-index: 100;
+        }
+        .loading-overlay.active { display: flex; }
     </style>
 </head>
 <body>
 
 <div class="phone-mock">
+    <div id="loading" class="loading-overlay">通信中...</div>
 
     <div id="screen-login" class="screen active">
         <h2>ログイン</h2>
-        <input type="text" placeholder="メールアドレス">
-        <input type="password" placeholder="パスワード">
-        <button onclick="navigateTo('screen-group')">ログイン</button>
+        <input type="text" id="input-login-name" placeholder="あなたの名前（アプリ内で表示）">
+        <button onclick="handleLogin()">ログインして始める</button>
     </div>
 
     <div id="screen-group" class="screen">
-        <h2>グループ選択</h2>
-        <div class="group-list" id="group-container">
-            <div class="group-item" onclick="openGroup('卒業旅行')">卒業旅行（4人）</div>
-            <div class="group-item" onclick="openGroup('週末キャンプ')">週末キャンプ（3人）</div>
+        <div class="group-header">
+            <h2>グループ選択</h2>
+            <div style="text-align: right;">
+                <div class="user-status" id="txt-user-status">〇〇さん</div>
+                <button class="btn-logout" onclick="handleLogout()">ログアウト</button>
+            </div>
         </div>
+        <div class="group-list" id="group-container"></div>
         <button class="btn-fab" onclick="toggleGroupModal(true)">+</button>
     </div>
 
     <div id="group-modal" class="modal">
         <div class="modal-content">
             <h3>グループ作成</h3>
+            <label style="font-size:12px; color:#666;">グループ名</label>
             <input type="text" id="new-group-name" placeholder="グループ名を入力">
-            <button onclick="createGroup()" style="background-color: #2ecc71;">作成する</button>
+            
+            <label style="font-size:12px; color:#666; margin-top:10px; display:block;">仮メンバー（メモ用）を追加</label>
+            <div style="display:flex; gap:5px;">
+                <input type="text" id="create-member-name-input" placeholder="名前を入力" style="margin:0; flex:1;">
+                <button onclick="addMemberToCreate()" style="margin:0; width:auto; padding:0 15px;">追加</button>
+            </div>
+            <div class="member-tag-list" id="create-member-list"></div>
+
+            <button onclick="createGroup()" style="background-color: #2ecc71; margin-top: 20px;">作成する</button>
             <button onclick="toggleGroupModal(false)" style="background-color: #95a5a6; margin-top: 5px;">キャンセル</button>
+        </div>
+    </div>
+
+    <div id="group-edit-modal" class="modal">
+        <div class="modal-content">
+            <h3>グループ名の編集</h3>
+            <input type="hidden" id="edit-group-id">
+            <label style="font-size:12px; color:#666;">新しいグループ名</label>
+            <input type="text" id="input-edit-group-name">
+            <button onclick="saveGroupEdit()" style="background-color: #2ecc71;">変更を保存</button>
+            <button onclick="closeGroupEditModal()" style="background-color: #95a5a6; margin-top: 5px;">キャンセル</button>
         </div>
     </div>
 
     <div id="screen-main" class="screen">
         <div class="main-header">
-            <span style="color: var(--primary-color); cursor:pointer; font-size:12px; position:absolute; left:0; top:8px;" onclick="navigateTo('screen-group')">← 戻る</span>
-            <h3 id="current-group-title">グループ名</h3>
+            <span style="color: var(--primary-color); cursor:pointer; font-size:12px; position:absolute; left:0;" onclick="goToGroupScreen()">← 戻る</span>
+            <div class="title-container">
+                <h3 id="current-group-title">グループ名</h3>
+                <div class="menu-container">
+                    <button class="btn-menu" onclick="toggleMenu(event, 'header')">⋮</button>
+                    <div class="dropdown-menu" id="menu-header" style="width: 100px;">
+                        <div onclick="openGroupSettingsModal()">グループ設定</div>
+                    </div>
+                </div>
+            </div>
         </div>
         
-        <div class="main-content" id="main-content-area">
-            </div>
-
+        <div class="main-content" id="main-content-area"></div>
         <button class="btn-fab" onclick="openItemModal()">+</button>
 
         <div class="tab-bar">
@@ -266,9 +376,29 @@
         </div>
     </div>
 
+    <div id="group-settings-modal" class="modal">
+        <div class="modal-content">
+            <h3>グループの設定</h3>
+            <label style="font-size:12px; color:#666;">グループ名の変更</label>
+            <input type="text" id="edit-group-name-input">
+            
+            <label style="font-size:12px; color:#666; margin-top:10px; display:block;">仮メンバーの追加</label>
+            <div style="display:flex; gap:5px;">
+                <input type="text" id="new-member-name-input" placeholder="名前を入力" style="margin:0; flex:1;">
+                <button onclick="addMember()" style="margin:0; width:auto; padding:0 15px;">追加</button>
+            </div>
+            <div class="member-tag-list" id="modal-member-list"></div>
+
+            <button onclick="copyInviteURL()" style="background-color: #f39c12; font-size:13px; padding:8px;">LINE等で友達を招待 (URLコピー)</button>
+            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+            <button onclick="saveGroupSettings()" style="background-color: #2ecc71; margin-top:0;">設定を保存する</button>
+            <button onclick="closeGroupSettingsModal()" style="background-color: #95a5a6; margin-top: 5px;">閉じる</button>
+        </div>
+    </div>
+
     <div id="item-modal" class="modal">
         <div class="modal-content">
-            <h3 id="item-modal-title">項目を追加</h3>
+            <h3 id="item-modal-title">項目を追加・編集</h3>
             <input type="hidden" id="edit-id">
             
             <div id="form-shiori" class="modal-form">
@@ -283,7 +413,8 @@
             </div>
 
             <div id="form-okane" class="modal-form" style="display:none;">
-                <input type="text" id="input-money-name" placeholder="支払った人の名前">
+                <label style="font-size:12px; color:#666;">支払った人を選んでください</label>
+                <select id="input-money-name" style="width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:8px; font-size:16px;"></select>
                 <input type="number" id="input-money-amount" placeholder="金額（円）">
                 <input type="text" id="input-money-text" placeholder="何に払ったか（例: レンタカー代）">
             </div>
@@ -292,96 +423,412 @@
             <button onclick="closeItemModal()" style="background-color: #95a5a6; margin-top: 5px;">キャンセル</button>
         </div>
     </div>
-
 </div>
 
-<script>
-    // --- データ管理用オブジェクト ---
-    let currentGroup = "卒業旅行";
-    let currentTab = "しおり"; 
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, collection, query, where, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // 初期モックデータ
-    let appData = {
-        '卒業旅行': {
-            shiori: [
-                { id: 1, time: '10:00', text: '〇〇駅集合' },
-                { id: 2, time: '11:30', text: 'ランチ（海鮮丼）' }
-            ],
-            yukisaki: [
-                { id: 1, name: '〇〇神社', url: 'https://example.com' },
-                { id: 2, name: 'サンセットビーチ', url: '' }
-            ],
-            okane: [
-                { id: 1, name: 'たろう', amount: 4000, text: 'レンタカー代' },
-                { id: 2, name: 'はなこ', amount: 1400, text: 'カフェ代' }
-            ]
-        },
-        '週末キャンプ': { shiori: [], yukisaki: [], okane: [] }
+    const firebaseConfig = {
+        apiKey: "AIzaSyBebAut679yxNIm1q5CUjBsrbVT1c8mWKg",
+        authDomain: "appsakusei-877a7.firebaseapp.com",
+        projectId: "appsakusei-877a7",
+        storageBucket: "appsakusei-877a7.firebasestorage.app",
+        messagingSenderId: "738304206704",
+        appId: "1:738304206704:web:d4ca81048b5cc9da5591b5",
+        measurementId: "G-DQ44Z0DMC3"
     };
 
-    // 画面遷移
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let myUID = ""; 
+    let loginUserName = "";
+    let currentGroupId = "";
+    let currentTab = "しおり"; 
+    let createTempMembers = []; 
+    let tempMembers = {}; 
+
+    let groupListUnsubscribe = null;
+    let activeGroupUnsubscribe = null;
+    let currentGroupData = null;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteGroupId = urlParams.get('join');
+
+    // ログイン状態の監視
+    onAuthStateChanged(auth, async (user) => {
+        showLoading(true);
+        if (user) {
+            myUID = user.uid;
+            const userDoc = await getDoc(doc(db, "users", myUID));
+            if (userDoc.exists()) {
+                loginUserName = userDoc.data().name;
+                document.getElementById('txt-user-status').innerText = `${loginUserName} さん`;
+                
+                if (inviteGroupId) {
+                    await joinGroupViaLink(inviteGroupId);
+                } else {
+                    goToGroupScreen();
+                }
+            } else {
+                navigateTo('screen-login');
+                showLoading(false);
+            }
+        } else {
+            myUID = "";
+            loginUserName = "";
+            document.getElementById('input-login-name').value = "";
+            
+            if (groupListUnsubscribe) { groupListUnsubscribe(); groupListUnsubscribe = null; }
+            if (activeGroupUnsubscribe) { activeGroupUnsubscribe(); activeGroupUnsubscribe = null; }
+            
+            navigateTo('screen-login');
+            showLoading(false);
+        }
+    });
+
+    function showLoading(show) {
+        document.getElementById('loading').classList.toggle('active', show);
+    }
+
+    async function handleLogin() {
+        const nameInput = document.getElementById('input-login-name').value.trim();
+        if (!nameInput) return alert("名前を入力してください");
+        showLoading(true);
+
+        const dummyEmail = encodeURIComponent(nameInput) + "@travel-app.dummy";
+        const dummyPassword = "fixedPassword123_Secure!";
+
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, dummyEmail, dummyPassword);
+            myUID = userCredential.user.uid;
+            loginUserName = nameInput;
+
+            if (inviteGroupId) {
+                await joinGroupViaLink(inviteGroupId);
+            } else {
+                goToGroupScreen();
+            }
+        } catch (loginError) {
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, dummyEmail, dummyPassword);
+                myUID = userCredential.user.uid;
+                loginUserName = nameInput;
+
+                await setDoc(doc(db, "users", myUID), { 
+                    name: loginUserName,
+                    email: dummyEmail
+                });
+
+                if (inviteGroupId) {
+                    await joinGroupViaLink(inviteGroupId);
+                } else {
+                    goToGroupScreen();
+                }
+            } catch (createError) {
+                alert("ログインに失敗しました");
+                showLoading(false);
+            }
+        }
+    }
+
+    async function handleLogout() {
+        if (!confirm("ログアウトしますか？")) return;
+        showLoading(true);
+        try {
+            await signOut(auth);
+        } catch (e) {
+            alert("ログアウトに失敗しました");
+            showLoading(false);
+        }
+    }
+
+    async function joinGroupViaLink(groupId) {
+        try {
+            const groupRef = doc(db, "groups", groupId);
+            const groupSnap = await getDoc(groupRef);
+            if (groupSnap.exists()) {
+                const updates = { members: arrayUnion(myUID) };
+                updates[`memberNames.${myUID}`] = loginUserName;
+                await updateDoc(groupRef, updates);
+
+                window.history.replaceState({}, document.title, window.location.pathname);
+                currentGroupId = groupId;
+                openGroup(groupId, groupSnap.data().name);
+            } else {
+                alert("指定された旅行グループは存在しません");
+                goToGroupScreen();
+            }
+        } catch (e) {
+            alert("グループへの参加に失敗しました");
+            goToGroupScreen();
+        }
+    }
+
     function navigateTo(screenId) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
-        // メニューが開いたまま画面遷移したとき用のリセット
         closeAllMenus();
     }
 
-    // グループ選択画面のモーダル
-    function toggleGroupModal(show) {
-        document.getElementById('group-modal').classList.toggle('active', show);
+    function goToGroupScreen() {
+        navigateTo('screen-group');
+        syncGroupList();
     }
 
-    function createGroup() {
+    function syncGroupList() {
+        if (groupListUnsubscribe) groupListUnsubscribe();
+        showLoading(true);
+
+        const q = query(collection(db, "groups"), where("members", "array-contains", myUID));
+        groupListUnsubscribe = onSnapshot(q, (snapshot) => {
+            const container = document.getElementById('group-container');
+            container.innerHTML = '';
+            
+            if (snapshot.empty) {
+                container.innerHTML = `
+                    <div class="guide-card">
+                        <div class="guide-icon">✈️</div>
+                        <div class="guide-title">旅の計画をはじめよう！</div>
+                        <p class="guide-desc">右下の<strong>「＋」ボタン</strong>から、新しい旅行グループを作ってみましょう！友達にURLを送れば一緒に編集できます。</p>
+                    </div>`;
+                showLoading(false);
+                return;
+            }
+
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                const gid = docSnap.id;
+                const memberCount = Object.keys(data.memberNames || {}).length;
+                
+                const div = document.createElement('div');
+                div.className = 'group-item';
+                
+                div.innerHTML = `
+                    <div style="flex:1; cursor:pointer; padding-right:10px; word-break:break-all;" onclick="openGroup('${gid}', '${data.name}')">
+                        ${data.name}（${memberCount}人）
+                    </div>
+                    <div class="menu-container">
+                        <button class="btn-menu" onclick="toggleMenu(event, '${gid}')">⋮</button>
+                        <div class="dropdown-menu" id="menu-${gid}">
+                            <div onclick="openGroupEditModal('${gid}', '${data.name}')">編集</div>
+                            <div class="menu-delete" onclick="deleteGroup('${gid}')">削除</div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            showLoading(false);
+        });
+    }
+
+    function toggleGroupModal(show) {
+        const modal = document.getElementById('group-modal');
+        if (show) {
+            document.getElementById('new-group-name').value = '';
+            document.getElementById('create-member-name-input').value = '';
+            createTempMembers = [{ id: myUID, name: loginUserName }]; 
+            renderCreateMembers();
+            modal.classList.add('active');
+        } else {
+            modal.classList.remove('active');
+        }
+    }
+
+    function renderCreateMembers() {
+        const listContainer = document.getElementById('create-member-list');
+        listContainer.innerHTML = '';
+        createTempMembers.forEach((m, index) => {
+            const tag = document.createElement('div');
+            tag.className = 'member-tag';
+            const deleteBtn = m.id === myUID ? '' : ` <button class="btn-del-member" onclick="removeMemberFromCreate(${index})">×</button>`;
+            tag.innerHTML = `${m.name}${deleteBtn}`;
+            listContainer.appendChild(tag);
+        });
+    }
+
+    function addMemberToCreate() {
+        const input = document.getElementById('create-member-name-input');
+        const name = input.value.trim();
+        if(!name) return;
+        const dummyId = "dummy_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4);
+        createTempMembers.push({ id: dummyId, name: name });
+        input.value = '';
+        renderCreateMembers();
+    }
+
+    function removeMemberFromCreate(index) {
+        createTempMembers.splice(index, 1);
+        renderCreateMembers();
+    }
+
+    async function createGroup() {
         const nameInput = document.getElementById('new-group-name');
         const groupName = nameInput.value.trim();
         if (!groupName) return alert("グループ名を入力してください");
 
-        appData[groupName] = { shiori: [], yukisaki: [], okane: [] };
+        showLoading(true);
+        const newGroupRef = doc(collection(db, "groups"));
+        
+        const membersArray = [];
+        const memberNamesMap = {};
+        createTempMembers.forEach(m => {
+            membersArray.push(m.id);
+            memberNamesMap[m.id] = m.name;
+        });
 
-        const container = document.getElementById('group-container');
-        const newGroup = document.createElement('div');
-        newGroup.className = 'group-item';
-        newGroup.innerText = `${groupName}（1人）`;
-        newGroup.onclick = function() { openGroup(groupName); };
-        container.appendChild(newGroup);
+        await setDoc(newGroupRef, {
+            name: groupName,
+            members: membersArray,
+            memberNames: memberNamesMap,
+            shiori: [],
+            yukisaki: [],
+            okane: []
+        });
 
-        nameInput.value = '';
         toggleGroupModal(false);
+        openGroup(newGroupRef.id, groupName);
     }
 
-    function openGroup(name) {
-        currentGroup = name;
-        document.getElementById('current-group-title').innerText = name;
-        switchTab('しおり');
+    function openGroup(groupId, groupName) {
+        currentGroupId = groupId;
+        document.getElementById('current-group-title').innerText = groupName;
         navigateTo('screen-main');
+
+        if (activeGroupUnsubscribe) activeGroupUnsubscribe();
+
+        activeGroupUnsubscribe = onSnapshot(doc(db, "groups", groupId), (docSnap) => {
+            if (!docSnap.exists()) return;
+            currentGroupData = docSnap.data();
+            renderContent();
+        });
     }
 
-    // --- タブ切り替えと描画 ---
+    function openGroupEditModal(groupId, currentName) {
+        closeAllMenus();
+        document.getElementById('edit-group-id').value = groupId;
+        document.getElementById('input-edit-group-name').value = currentName;
+        document.getElementById('group-edit-modal').classList.add('active');
+    }
+
+    function closeGroupEditModal() {
+        document.getElementById('group-edit-modal').classList.remove('active');
+    }
+
+    async function saveGroupEdit() {
+        const gid = document.getElementById('edit-group-id').value;
+        const newName = document.getElementById('input-edit-group-name').value.trim();
+        if(!newName) return alert("グループ名を入力してください");
+        
+        showLoading(true);
+        await updateDoc(doc(db, "groups", gid), { name: newName });
+        closeGroupEditModal();
+        showLoading(false);
+    }
+
+    async function deleteGroup(groupId) {
+        closeAllMenus();
+        if(!confirm("本当にこのグループを削除しますか？\n内包されているしおりや支出データもすべて消去されます。")) return;
+        
+        showLoading(true);
+        try {
+            await deleteDoc(doc(db, "groups", groupId));
+        } catch(e) {
+            alert("グループの削除に失敗しました");
+        }
+        showLoading(false);
+    }
+
+    function openGroupSettingsModal() {
+        closeAllMenus();
+        document.getElementById('edit-group-name-input').value = currentGroupData.name;
+        tempMembers = { ...currentGroupData.memberNames };
+        renderModalMembers();
+        document.getElementById('group-settings-modal').classList.add('active');
+    }
+
+    function closeGroupSettingsModal() {
+        document.getElementById('group-settings-modal').classList.remove('active');
+    }
+
+    function renderModalMembers() {
+        const listContainer = document.getElementById('modal-member-list');
+        listContainer.innerHTML = '';
+        Object.keys(tempMembers).forEach((id) => {
+            const tag = document.createElement('div');
+            tag.className = 'member-tag';
+            const isMe = id === myUID;
+            const deleteBtn = isMe ? '' : ` <button class="btn-del-member" onclick="removeTempMember('${id}')">×</button>`;
+            tag.innerHTML = `${tempMembers[id]}${deleteBtn}`;
+            listContainer.appendChild(tag);
+        });
+    }
+
+    function addMember() {
+        const input = document.getElementById('new-member-name-input');
+        const name = input.value.trim();
+        if(!name) return;
+        const dummyId = "dummy_" + Date.now();
+        tempMembers[dummyId] = name;
+        input.value = '';
+        renderModalMembers();
+    }
+
+    function removeTempMember(id) {
+        delete tempMembers[id];
+        renderModalMembers();
+    }
+
+    function copyInviteURL() {
+        const inviteURL = `${window.location.origin}${window.location.pathname}?join=${currentGroupId}`;
+        navigator.clipboard.writeText(inviteURL).then(() => {
+            alert("招待URLをコピーしました！\nLINEやインスタで友達に送ると、このグループに直接参加してもらえます。");
+        }).catch(() => {
+            alert("URLのコピーに失敗しました: " + inviteURL);
+        });
+    }
+
+    async function saveGroupSettings() {
+        const newName = document.getElementById('edit-group-name-input').value.trim();
+        if(!newName) return alert("グループ名を入力してください");
+
+        showLoading(true);
+        const groupRef = doc(db, "groups", currentGroupId);
+        const membersArray = Object.keys(tempMembers);
+
+        await updateDoc(groupRef, {
+            name: newName,
+            members: membersArray,
+            memberNames: tempMembers
+        });
+
+        document.getElementById('current-group-title').innerText = newName;
+        closeGroupSettingsModal();
+        showLoading(false);
+    }
+
     function switchTab(tabName) {
         currentTab = tabName;
         closeAllMenus();
-
-        // タブバーのハイライト切り替え
         document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
         if(tabName === 'しおり') document.getElementById('tab-shiori').classList.add('active');
         if(tabName === '行き先') document.getElementById('tab-yukisaki').classList.add('active');
         if(tabName === 'お金') document.getElementById('tab-okane').classList.add('active');
-
         renderContent();
     }
 
     function renderContent() {
         const container = document.getElementById('main-content-area');
-        container.innerHTML = ""; // 一旦クリア
-        
-        const data = appData[currentGroup];
+        container.innerHTML = "";
+        if (!currentGroupData) return;
 
         if (currentTab === 'しおり') {
-            // 時間順にソート（24時間表記文字列の比較）
-            data.shiori.sort((a, b) => a.time.localeCompare(b.time));
-            
-            data.shiori.forEach(item => {
+            const shioriList = [...(currentGroupData.shiori || [])];
+            shioriList.sort((a, b) => a.time.localeCompare(b.time));
+            shioriList.forEach(item => {
                 container.appendChild(createListItemHTML(item.id, `
                     <span class="item-time">${item.time}</span>
                     <span>${item.text}</span>
@@ -389,78 +836,75 @@
             });
         } 
         else if (currentTab === '行き先') {
-            data.yukisaki.forEach(item => {
+            const yukisakiList = currentGroupData.yukisaki || [];
+            yukisakiList.forEach(item => {
                 let urlLink = item.url ? `<br><a href="${item.url}" target="_blank" style="font-size:12px; color:var(--primary-color);">${item.url}</a>` : '';
-                container.appendChild(createListItemHTML(item.id, `
-                    <strong>${item.name}</strong>${urlLink}
-                `));
+                container.appendChild(createListItemHTML(item.id, `<strong>${item.name}</strong>${urlLink}`));
             });
         } 
         else if (currentTab === 'お金') {
-            // 割り勘計算ロジック
             let total = 0;
-            let memberMap = {}; // 各自の支払額合計
-            data.okane.forEach(e => {
+            let memberMap = {}; 
+            const memberIds = Object.keys(currentGroupData.memberNames || {});
+            const okaneList = currentGroupData.okane || [];
+            
+            memberIds.forEach(id => memberMap[id] = 0);
+            okaneList.forEach(e => {
                 total += e.amount;
-                memberMap[e.name] = (memberMap[e.name] || 0) + e.amount;
+                if (memberMap[e.uid] !== undefined) memberMap[e.uid] += e.amount;
             });
             
-            const members = Object.keys(memberMap);
             let settlementHTML = '';
-            
-            if (members.length > 0) {
-                const perPerson = Math.round(total / members.length);
+            const totalMembers = memberIds.length;
+
+            if (totalMembers > 0) {
+                const perPerson = Math.round(total / totalMembers);
                 settlementHTML = `
                     <div id="settlement-area">
-                        <strong>合計:</strong> ${total.toLocaleString()}円 / <strong>1人あたり:</strong> ${perPerson.toLocaleString()}円<br>
+                        <strong>合計支出:</strong> ${total.toLocaleString()}円 / <strong>1人あたり:</strong> ${perPerson.toLocaleString()}円<br>
                         <table style="width:100%; margin-top:5px; font-size:12px; border-top:1px solid #ccc;">
                 `;
-                members.forEach(m => {
-                    const diff = memberMap[m] - perPerson;
+                memberIds.forEach(id => {
+                    const name = currentGroupData.memberNames[id] || "不明なユーザー";
+                    const diff = memberMap[id] - perPerson;
                     let diffText = diff >= 0 ? `<span style="color:#2ecc71;">+${diff.toLocaleString()}円 (貰う)</span>` : `<span style="color:#e74c3c;">${diff.toLocaleString()}円 (払う)</span>`;
-                    settlementHTML += `<tr><td>${m}</td><td style="text-align:right;">${diffText}</td></tr>`;
+                    settlementHTML += `<tr><td>${name}</td><td style="text-align:right;">${diffText}</td></tr>`;
                 });
                 settlementHTML += `</table></div>`;
-            } else {
-                settlementHTML = `<div id="settlement-area" style="text-align:center; color:#999;">支出を入力すると割り勘を自動計算します</div>`;
             }
 
-            // 精算エリアを先頭に追加
             container.innerHTML = settlementHTML;
 
-            // 支出一覧の描画
-            data.okane.forEach(item => {
+            okaneList.forEach(item => {
+                const payerName = currentGroupData.memberNames[item.uid] || "不明なユーザー";
                 container.appendChild(createListItemHTML(item.id, `
-                    <strong>${item.name}</strong> が <strong>${item.amount.toLocaleString()}円</strong> 支払った<br>
+                    <strong>${payerName}</strong> が <strong>${item.amount.toLocaleString()}円</strong> 支払った<br>
                     <span style="font-size:12px; color:#666;">（${item.text}）</span>
                 `));
             });
         }
     }
 
-    // 共通のアイテム枠（3点リーダー付き）を作る関数
     function createListItemHTML(id, innerContentHTML) {
         const div = document.createElement('div');
         div.className = 'list-item';
         div.innerHTML = `
             <div class="item-data">${innerContentHTML}</div>
             <div class="menu-container">
-                <button class="btn-menu" onclick="toggleMenu(event, ${id})">⋮</button>
+                <button class="btn-menu" onclick="toggleMenu(event, '${id}')">⋮</button>
                 <div class="dropdown-menu" id="menu-${id}">
-                    <div onclick="openEditItem(${id})">編集</div>
-                    <div class="menu-delete" onclick="deleteItem(${id})">削除</div>
+                    <div onclick="openEditItem('${id}')">編集</div>
+                    <div class="menu-delete" onclick="deleteItem('${id}')">削除</div>
                 </div>
             </div>
         `;
         return div;
     }
 
-    // --- 3点リーダーメニューの制御 ---
     function toggleMenu(event, id) {
-        event.stopPropagation(); // 親要素へのクリック伝播を防ぐ
+        event.stopPropagation();
         const targetMenu = document.getElementById(`menu-${id}`);
         const isAlreadyOpen = targetMenu.classList.contains('show');
-        
         closeAllMenus();
         if (!isAlreadyOpen) targetMenu.classList.add('show');
     }
@@ -468,24 +912,31 @@
     function closeAllMenus() {
         document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
     }
-
-    // 画面のどこかをタップしたらメニューを閉じる
     document.addEventListener('click', closeAllMenus);
 
-    // --- 項目 追加・編集モーダルの制御 ---
     function openItemModal() {
-        document.getElementById('edit-id').value = ''; // 新規なのでID空
+        document.getElementById('edit-id').value = ''; 
         document.getElementById('item-modal-title').innerText = `${currentTab}の追加`;
         
-        // フォームの切り替え
         document.getElementById('form-shiori').style.display = currentTab === 'しおり' ? 'block' : 'none';
         document.getElementById('form-yukisaki').style.display = currentTab === '行き先' ? 'block' : 'none';
         document.getElementById('form-okane').style.display = currentTab === 'お金' ? 'block' : 'none';
 
-        // 入力欄リセット
         if(currentTab === 'しおり') { document.getElementById('input-shiori-text').value = ''; }
         if(currentTab === '行き先') { document.getElementById('input-spot-name').value = ''; document.getElementById('input-spot-url').value = ''; }
-        if(currentTab === 'お金') { document.getElementById('input-money-name').value = ''; document.getElementById('input-money-amount').value = ''; document.getElementById('input-money-text').value = ''; }
+        
+        if(currentTab === 'お金') { 
+            const select = document.getElementById('input-money-name');
+            select.innerHTML = '';
+            const namesMap = currentGroupData.memberNames || {};
+            Object.keys(namesMap).forEach(uid => {
+                const opt = document.createElement('option');
+                opt.value = uid; opt.innerText = namesMap[uid];
+                select.appendChild(opt);
+            });
+            document.getElementById('input-money-amount').value = ''; 
+            document.getElementById('input-money-text').value = ''; 
+        }
 
         document.getElementById('item-modal').classList.add('active');
     }
@@ -494,39 +945,40 @@
         document.getElementById('item-modal').classList.remove('active');
     }
 
-    // 編集モードでモーダルを開く
     function openEditItem(id) {
         openItemModal();
         document.getElementById('edit-id').value = id;
         document.getElementById('item-modal-title').innerText = `${currentTab}の編集`;
 
-        const data = appData[currentGroup];
-
         if (currentTab === 'しおり') {
-            const item = data.shiori.find(i => i.id === id);
+            const item = currentGroupData.shiori.find(i => i.id === id);
             document.getElementById('input-time').value = item.time;
             document.getElementById('input-shiori-text').value = item.text;
         } 
         else if (currentTab === '行き先') {
-            const item = data.yukisaki.find(i => i.id === id);
+            const item = currentGroupData.yukisaki.find(i => i.id === id);
             document.getElementById('input-spot-name').value = item.name;
             document.getElementById('input-spot-url').value = item.url;
         } 
         else if (currentTab === 'お金') {
-            const item = data.okane.find(i => i.id === id);
-            document.getElementById('input-money-name').value = item.name;
+            const item = currentGroupData.okane.find(i => i.id === id);
+            document.getElementById('input-money-name').value = item.uid;
             document.getElementById('input-money-amount').value = item.amount;
             document.getElementById('input-money-text').value = item.text;
         }
     }
 
-    // 保存処理（新規・編集 共通）
-    function saveItem() {
+    async function saveItem() {
         const idInput = document.getElementById('edit-id').value;
         const isEdit = idInput !== '';
-        const itemId = isEdit ? parseInt(idInput) : Date.now(); // 簡易的なユニークID生成
+        const itemId = isEdit ? idInput : "item_" + Date.now(); 
         
-        const data = appData[currentGroup];
+        showLoading(true);
+        const groupRef = doc(db, "groups", currentGroupId);
+
+        let shioriList = [...(currentGroupData.shiori || [])];
+        let yukisakiList = [...(currentGroupData.yukisaki || [])];
+        let okaneList = [...(currentGroupData.okane || [])];
 
         if (currentTab === 'しおり') {
             const time = document.getElementById('input-time').value;
@@ -534,10 +986,10 @@
             if(!text) return alert("内容を入力してください");
 
             if (isEdit) {
-                const item = data.shiori.find(i => i.id === itemId);
+                const item = shioriList.find(i => i.id === itemId);
                 item.time = time; item.text = text;
             } else {
-                data.shiori.push({ id: itemId, time: time, text: text });
+                shioriList.push({ id: itemId, time: time, text: text });
             }
         } 
         else if (currentTab === '行き先') {
@@ -546,42 +998,79 @@
             if(!name) return alert("スポット名を入力してください");
 
             if (isEdit) {
-                const item = data.yukisaki.find(i => i.id === itemId);
+                const item = yukisakiList.find(i => i.id === itemId);
                 item.name = name; item.url = url;
             } else {
-                data.yukisaki.push({ id: itemId, name: name, url: url });
+                yukisakiList.push({ id: itemId, name: name, url: url });
             }
         } 
         else if (currentTab === 'お金') {
-            const name = document.getElementById('input-money-name').value.trim();
+            const uid = document.getElementById('input-money-name').value;
             const amount = parseInt(document.getElementById('input-money-amount').value);
             const text = document.getElementById('input-money-text').value.trim();
-            if(!name || isNaN(amount)) return alert("名前と金額を正しく入力してください");
+            if(!uid || isNaN(amount)) return alert("金額を正しく入力してください");
 
             if (isEdit) {
-                const item = data.okane.find(i => i.id === itemId);
-                item.name = name; item.amount = amount; item.text = text;
+                const item = okaneList.find(i => i.id === itemId);
+                item.uid = uid; item.amount = amount; item.text = text;
             } else {
-                data.okane.push({ id: itemId, name: name, amount: amount, text: text });
+                okaneList.push({ id: itemId, uid: uid, amount: amount, text: text });
             }
         }
 
+        await updateDoc(groupRef, {
+            shiori: shioriList,
+            yukisaki: yukisakiList,
+            okane: okaneList
+        });
+
         closeItemModal();
-        renderContent();
+        showLoading(false);
     }
 
-    // 削除処理
-    function deleteItem(id) {
+    async function deleteItem(id) {
         if(!confirm("本当に削除しますか？")) return;
-        
-        const data = appData[currentGroup];
-        if (currentTab === 'しおり') data.shiori = data.shiori.filter(i => i.id !== id);
-        if (currentTab === '行き先') data.yukisaki = data.yukisaki.filter(i => i.id !== id);
-        if (currentTab === 'お金') data.okane = data.okane.filter(i => i.id !== id);
+        showLoading(true);
+        const groupRef = doc(db, "groups", currentGroupId);
 
-        renderContent();
+        let shioriList = (currentGroupData.shiori || []).filter(i => i.id !== id);
+        let yukisakiList = (currentGroupData.yukisaki || []).filter(i => i.id !== id);
+        let okaneList = (currentGroupData.okane || []).filter(i => i.id !== id);
+
+        await updateDoc(groupRef, {
+            shiori: shioriList,
+            yukisaki: yukisakiList,
+            okane: okaneList
+        });
+        showLoading(false);
     }
-</script>
 
+    // 🌟 【超重要】すべてのローカル関数をwindowオブジェクトに登録してHTMLのonclickに公開
+    window.handleLogin = handleLogin;
+    window.handleLogout = handleLogout;
+    window.goToGroupScreen = goToGroupScreen;
+    window.toggleGroupModal = toggleGroupModal;
+    window.addMemberToCreate = addMemberToCreate;
+    window.removeMemberFromCreate = removeMemberFromCreate;
+    window.createGroup = createGroup;
+    window.openGroup = openGroup;
+    window.openGroupEditModal = openGroupEditModal;
+    window.closeGroupEditModal = closeGroupEditModal;
+    window.saveGroupEdit = saveGroupEdit;
+    window.deleteGroup = deleteGroup;
+    window.openGroupSettingsModal = openGroupSettingsModal;
+    window.closeGroupSettingsModal = closeGroupSettingsModal;
+    window.addMember = addMember;
+    window.removeTempMember = removeTempMember;
+    window.copyInviteURL = copyInviteURL;
+    window.saveGroupSettings = saveGroupSettings;
+    window.switchTab = switchTab;
+    window.toggleMenu = toggleMenu;
+    window.openItemModal = openItemModal;
+    window.closeItemModal = closeItemModal;
+    window.openEditItem = openEditItem;
+    window.saveItem = saveItem;
+    window.deleteItem = deleteItem;
+</script>
 </body>
 </html>
